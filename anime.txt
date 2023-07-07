@@ -1,0 +1,44 @@
+# app.py (main server file)
+
+from flask import Flask, render_template, request, redirect, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_connection_string'
+db = SQLAlchemy(app)
+
+# Define the database models (anime series, characters, etc.)
+class AnimeSeries(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    # Add more fields as needed
+
+# Routes
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/anime', methods=['GET', 'POST'])
+def anime():
+    if request.method == 'POST':
+        # Create a new anime series
+        title = request.form['title']
+        description = request.form['description']
+        anime_series = AnimeSeries(title=title, description=description)
+        db.session.add(anime_series)
+        db.session.commit()
+        return redirect('/anime')
+    else:
+        # Retrieve all anime series from the database
+        anime_series = AnimeSeries.query.all()
+        return render_template('anime.html', anime_series=anime_series)
+
+@app.route('/anime/<int:series_id>')
+def anime_details(series_id):
+    # Retrieve details of a specific anime series
+    anime_series = AnimeSeries.query.get(series_id)
+    return render_template('anime_details.html', anime_series=anime_series)
+
+# Run the Flask application
+if __name__ == '__main__':
